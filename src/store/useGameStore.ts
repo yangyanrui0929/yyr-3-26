@@ -30,6 +30,8 @@ interface GameState {
   totalGeneration: number;
   totalConsumption: number;
   showSettlement: boolean;
+  showBatteryDetail: boolean;
+  selectedBattery: { x: number; y: number } | null;
   setSelectedTool: (tool: ToolType) => void;
   placeOrRemove: (x: number, y: number) => void;
   rotateCell: (x: number, y: number) => void;
@@ -38,6 +40,8 @@ interface GameState {
   resetGame: () => void;
   openSettlement: () => void;
   closeSettlement: () => void;
+  openBatteryDetail: (x: number, y: number) => void;
+  closeBatteryDetail: () => void;
 }
 
 function createEmptyGrid(): GridCell[][] {
@@ -127,6 +131,8 @@ function initGame(): Omit<GameState, keyof GameStateActions> {
     totalGeneration,
     totalConsumption,
     showSettlement: false,
+    showBatteryDetail: false,
+    selectedBattery: null,
   };
 }
 
@@ -140,6 +146,8 @@ type GameStateActions = Pick<
   | 'resetGame'
   | 'openSettlement'
   | 'closeSettlement'
+  | 'openBatteryDetail'
+  | 'closeBatteryDetail'
 >;
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -338,9 +346,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       totalGeneration: result.totalGeneration,
       totalConsumption: result.totalConsumption,
       showSettlement: false,
+      showBatteryDetail: false,
+      selectedBattery: null,
     });
   },
 
   openSettlement: () => set({ showSettlement: true }),
   closeSettlement: () => set({ showSettlement: false }),
+  openBatteryDetail: (x, y) => set({ showBatteryDetail: true, selectedBattery: { x, y } }),
+  closeBatteryDetail: () => set({ showBatteryDetail: false, selectedBattery: null }),
 }));

@@ -4,12 +4,14 @@ import { GridCellComponent } from './GridCell';
 import { GRID_SIZE } from '../utils/constants';
 
 export const FloatingIsland: React.FC = () => {
-  const { grid, selectedTool, placeOrRemove, rotateCell, repairCell, dayTime } = useGameStore();
+  const { grid, selectedTool, placeOrRemove, rotateCell, repairCell, dayTime, openBatteryDetail } = useGameStore();
 
   const handleCellClick = (x: number, y: number) => {
     const cell = grid[y][x];
     if (cell.faulty) {
       repairCell(x, y);
+    } else if (cell.type === 'battery' && selectedTool !== 'remove') {
+      openBatteryDetail(x, y);
     } else {
       placeOrRemove(x, y);
     }
