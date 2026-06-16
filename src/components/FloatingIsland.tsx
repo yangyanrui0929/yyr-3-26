@@ -8,10 +8,10 @@ export const FloatingIsland: React.FC = () => {
 
   const handleCellClick = (x: number, y: number) => {
     const cell = grid[y][x];
-    if (cell.faulty) {
-      repairCell(x, y);
-    } else if (cell.type === 'battery' && selectedTool !== 'remove') {
+    if (cell.type === 'battery' && selectedTool !== 'remove') {
       openBatteryDetail(x, y);
+    } else if (cell.faulty) {
+      repairCell(x, y);
     } else {
       placeOrRemove(x, y);
     }

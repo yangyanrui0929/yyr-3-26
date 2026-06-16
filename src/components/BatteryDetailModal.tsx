@@ -14,6 +14,7 @@ export const BatteryDetailModal: React.FC = () => {
     totalGeneration,
     totalConsumption,
     dayTime,
+    repairCell,
   } = useGameStore();
 
   if (!showBatteryDetail || !selectedBattery) return null;
@@ -61,19 +62,26 @@ export const BatteryDetailModal: React.FC = () => {
   }
 
   let nightSupportTime: string = '-';
-  if (totalConsumption <= 0) {
-    nightSupportTime = '无耗电设备';
+  let nightDischargePerTick = 0;
+  if (netPower >= 0) {
+    nightSupportTime = '夜间发电充足，持续供电中';
+    nightDischargePerTick = 0;
   } else {
-    const nightDischargePerTick = totalConsumption * 0.5;
-    const ticksSupported = storedPower / nightDischargePerTick;
-    const msSupported = ticksSupported * TICK_INTERVAL;
-    const seconds = Math.ceil(msSupported / 1000);
-    if (seconds < 60) {
-      nightSupportTime = `约 ${seconds} 秒`;
+    const deficit = -netPower;
+    nightDischargePerTick = deficit * 0.5;
+    if (storedPower <= 0) {
+      nightSupportTime = '电量已耗尽';
     } else {
-      const minutes = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      nightSupportTime = `约 ${minutes} 分 ${secs} 秒`;
+      const ticksSupported = storedPower / nightDischargePerTick;
+      const msSupported = ticksSupported * TICK_INTERVAL;
+      const seconds = Math.ceil(msSupported / 1000);
+      if (seconds < 60) {
+        nightSupportTime = `约 ${seconds} 秒`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        nightSupportTime = `约 ${minutes} 分 ${secs} 秒`;
+      }
     }
   }
 
@@ -233,7 +241,7 @@ export const BatteryDetailModal: React.FC = () => {
               </div>
               <p className="text-xl font-bold text-indigo-700">{nightSupportTime}</p>
               <p className="text-xs text-gray-500 mt-1">
-                放电效率: 耗电量 × 0.5 / 每 tick（当前 -{(totalConsumption * 0.5).toFixed(2)} 电/tick）
+                放电速率: 净耗电 × 0.5 / 每 tick（当前 -{nightDischargePerTick.toFixed(2)} 电/tick）
               </p>
             </div>
           )}
@@ -243,23 +251,35 @@ export const BatteryDetailModal: React.FC = () => {
               ? 'bg-red-50 border-red-200'
               : 'bg-green-50 border-green-200'
           }`}>
-            <div className="flex items-center gap-2">
-              {cell.faulty ? (
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {cell.faulty ? (
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                )}
+                <h3 className={`text-sm font-bold ${
+                  cell.faulty ? 'text-red-800' : 'text-green-800'
+                }`}>
+                  {cell.faulty ? '本组状态：故障 ⚠️' : '本组状态：运行正常'}
+                </h3>
+              </div>
+              {cell.faulty && (
+                <button
+                  onClick={() => {
+                    repairCell(selectedBattery.x, selectedBattery.y);
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  🔧 维修
+                </button>
               )}
-              <h3 className={`text-sm font-bold ${
-                cell.faulty ? 'text-red-800' : 'text-green-800'
-              }`}>
-                {cell.faulty ? '本组状态：故障 ⚠️' : '本组状态：运行正常'}
-              </h3>
             </div>
             {cell.faulty && (
               <p className="text-xs text-red-600 mt-2">
-                点击电池格子（未选择拆除工具时）可进行维修
+                故障时无法参与充放电，点击右侧按钮立即维修
               </p>
             )}
           </div>
